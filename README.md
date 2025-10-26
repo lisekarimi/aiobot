@@ -88,3 +88,7 @@ make lint
 # Fix code issues
 make fix
 ```
+
+## 🌐 Deployment
+
+This application is deployed on **AWS App Runner** with a dedicated CI/CD pipeline. The deployment workflow (`.github/workflows/deploy-aws.yml`) builds Docker images and pushes them to **AWS ECR** (Elastic Container Registry), from which AWS App Runner pulls and deploys the latest version of the application.
