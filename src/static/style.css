@@ -1,0 +1,170 @@
+/* Global Dark Theme */
+* {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+}
+
+/* Main container - always dark */
+body, .gradio-container {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+/* All text elements - white for contrast */
+h1, h2, h3, h4, h5, h6, p, span, div, label, button {
+    color: #ffffff !important;
+}
+
+/* Links - bright blue for visibility */
+a {
+    color: #66b3ff !important;
+}
+
+a:hover {
+    color: #99ccff !important;
+}
+
+/* Input fields - dark with white text */
+input, textarea {
+    background-color: #3a3a3a !important;
+    color: #ffffff !important;
+    border: 1px solid #555555 !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #999999 !important;
+}
+
+/* Buttons - dark gray with white text */
+button {
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+    border: 1px solid #555555 !important;
+}
+
+button:hover {
+    background-color: #5a5a5a !important;
+}
+
+/* Chat messages */
+.message {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #444444 !important;
+}
+
+/* User message */
+.user {
+    background-color: #3a4a5a !important;
+}
+
+/* Bot message */
+.bot {
+    background-color: #2d2d2d !important;
+}
+
+/* Code blocks - darker with light text */
+pre, code {
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444444 !important;
+}
+
+/* Scrollbar - dark theme */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .gradio-container {
+        padding: 10px !important;
+    }
+
+    h1 {
+        font-size: 1.5rem !important;
+    }
+
+    h2 {
+        font-size: 1.3rem !important;
+    }
+
+    button {
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+    }
+
+    input, textarea {
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .gradio-container {
+        padding: 5px !important;
+    }
+
+    h1 {
+        font-size: 1.2rem !important;
+    }
+
+    h2 {
+        font-size: 1.1rem !important;
+    }
+
+    button {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* Ensure readability - no white on white */
+.markdown-body {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+}
+
+/* Center the header */
+.gradio-container h1 {
+    text-align: center !important;
+}
+
+.gradio-container > div > div:first-child {
+    text-align: center !important;
+}
+
+/* Examples container */
+.examples {
+    background-color: #2d2d2d !important;
+}
+
+/* Footer */
+footer {
+    background-color: #1a1a1a !important;
+    color: #999999 !important;
+    border-top: 1px solid #333333 !important;
+}
+
+/* Ensure all panels are dark */
+.panel {
+    background-color: #2d2d2d !important;
+    border: 1px solid #444444 !important;
+}
+
+/* Loading indicator */
+.loading {
+    color: #ffffff !important;
+}

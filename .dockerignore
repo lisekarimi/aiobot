@@ -1,0 +1,41 @@
+# Sensitive files
+.env
+.env.example
+
+# Git and version control
+.git/
+.github/
+.gitignore
+.gitattributes
+.pre-commit-config.yaml
+
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+*.egg-info/
+.python-version
+
+# IDE settings
+.vscode/
+*.code-workspace
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+
+# Documentation
+README.md
+CHANGELOG.md
+
+
+# Build automation
+Makefile
+act.mk
+
+# Docker
+.dockerignore
+Dockerfile

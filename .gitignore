@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+venv/
+
+# Package/build artifacts
+build/
+dist/
+bin/
+*.egg-info/
+*.eggs/
+*.manifest
+*.spec
+
+# Environment & config
+.env
+.gitattributes
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# MyPy / Ruff / Linting
+.mypy_cache/
+ruff_cache/
+.dmypy.json
