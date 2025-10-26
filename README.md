@@ -4,6 +4,8 @@ A conversational AI agent that analyzes real-time weather conditions and suggest
 
 🔗 **[Live Demo](https://aiobot.lisekarimi.com)**
 
+![AIObot Screenshot](https://github.com/lisekarimi/aiobot/blob/main/assets/screenshot.png?raw=true)
+
 ## ✨ Features
 
 - 🌤️ **Real-time Weather Analysis** - Get current weather conditions for any location
