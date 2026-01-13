@@ -8,11 +8,12 @@ A conversational AI agent that analyzes real-time weather conditions and suggest
 
 ## ✨ Features
 
-- 🌤️ **Real-time Weather Analysis** - Get current weather conditions for any location
+- 🌤️ **Real-time Weather Analysis** - Get current weather conditions using Open-Meteo (free) with MCP fallback for premium features
 - 🎯 **Personalized Activity Recommendations** - Indoor and outdoor activities based on weather
 - 🎪 **Event Discovery** - Find relevant events using Ticketmaster API
-- 💬 **Conversational Interface** - Chat with an AI assistant powered by OpenAI
+- 💬 **Conversational Interface** - Chat with an AI assistant powered by OpenAI Agents SDK
 - 🌍 **Global Coverage** - Works worldwide with weather data, events in select countries
+- 🔄 **Smart Weather Fallback** - Automatically falls back to MCP/WeatherAPI when Open-Meteo is unavailable
 
 ## 🚀 Quick Start
 
@@ -25,9 +26,9 @@ A conversational AI agent that analyzes real-time weather conditions and suggest
 - Make: `winget install GnuWin32.Make` (Windows) | `brew install make` (macOS) | `sudo apt install make` (Linux)
 
 - API keys for:
-  - [OpenAI](https://platform.openai.com/api-keys)
-  - [WeatherAPI](https://www.weatherapi.com)
-  - [Ticketmaster](https://developer.ticketmaster.com)
+  - [OpenAI](https://platform.openai.com/api-keys) (required)
+  - [Ticketmaster](https://developer.ticketmaster.com) (required)
+  - [WeatherAPI](https://www.weatherapi.com) (optional - used as fallback via MCP server)
 
 ### Installation
 
@@ -37,14 +38,19 @@ A conversational AI agent that analyzes real-time weather conditions and suggest
    cd aiobot
    ```
 
-3. **Set up environment variables**
+2. **Set up environment variables**
+
+   Create a `.env` file in the project root with your API keys:
    ```bash
-   cp .env.example .env
-   # Edit .env with your API keys:
-   # - OPENAI_API_KEY
-   # - WEATHERAPI_KEY
-   # - TICKETMASTER_KEY
+   # Required
+   OPENAI_API_KEY=your_openai_api_key_here
+   TICKETMASTER_KEY=your_ticketmaster_key_here
+
+   # Optional (for weather fallback via MCP)
+   WEATHER_API_KEY=your_weatherapi_key_here
    ```
+
+   **Note:** The app uses Open-Meteo (free) as the primary weather source. `WEATHER_API_KEY` is only needed if you want premium weather features (air quality, alerts) via the MCP fallback server.
 
 
 ### 🐋 Docker
@@ -54,8 +60,17 @@ Build and run with Docker:
 make dev
 ```
 
-## 🛠️ API Limitations
+## 🛠️ API Limitations & Weather Service
 
+### Weather Service Strategy
+The app uses a **dual-weather service approach** for reliability and cost efficiency:
+
+1. **Primary:** [Open-Meteo](https://open-meteo.com/) - Free, no API key required, works globally
+2. **Fallback:** MCP server with WeatherAPI - Used automatically if Open-Meteo fails (requires `WEATHER_API_KEY`)
+
+This ensures the app always has weather data available, even if one service is down.
+
+### Event API Limitations
 - **Ticketmaster API** works primarily in English-speaking countries:
   - 🇺🇸 United States (US)
   - 🇨🇦 Canada (CA)
@@ -64,7 +79,7 @@ make dev
   - 🇦🇪 Dubai, UAE (AE)
   - 🇳🇴 Norway (NO)
   - 🇳🇿 New Zealand (NZ)
-- **Weather API** works globally for all locations
+- **Weather services** work globally for all locations
 - For other countries, the app will provide weather-based activity suggestions without events
 
 
