@@ -1,6 +1,7 @@
 # src/constants.py
 """Application constants and configuration."""
 
+import os
 import tomllib
 from pathlib import Path
 
@@ -15,7 +16,7 @@ VERSION = _pyproject["project"]["version"]
 DESCRIPTION = _pyproject["project"]["description"]
 
 # API Configuration
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = os.getenv("MODEL", "gpt-4o-mini")
 WEATHER_API_URL = "https://api.weatherapi.com/v1/forecast.json"
 TICKETMASTER_API_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
 

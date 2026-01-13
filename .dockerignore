@@ -30,6 +30,7 @@ venv/
 # Documentation
 README.md
 CHANGELOG.md
+assets/
 
 
 # Build automation

@@ -1,56 +1,105 @@
 # src/api/weather.py
-"""Weather API integration."""
-
-import os
+"""Weather API client using Open-Meteo (free, no API key required)."""
 
 import requests
 
-from src.constants import API_TIMEOUT, WEATHER_API_URL, WEATHERAPI_KEY_ENV
 from src.logger import logger
 
 
 class WeatherAPI:
-    """Fetches weather data from WeatherAPI.com."""
+    """Handles weather data fetching from Open-Meteo API (free fallback)."""
 
     def __init__(self):
-        """Initialize WeatherAPI with API key from environment."""
-        self.api_key = os.getenv(WEATHERAPI_KEY_ENV)
-        if not self.api_key:
-            logger.error(f"❌ {WEATHERAPI_KEY_ENV} environment variable is required")
-            raise ValueError(
-                f"❌ {WEATHERAPI_KEY_ENV} environment variable is required"
-            )
-        logger.debug("WeatherAPI initialized successfully")
+        """Initialize the WeatherAPI with Open-Meteo endpoints."""
+        self.geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
+        self.weather_url = "https://api.open-meteo.com/v1/forecast"
 
-    def get_weather(self, city: str, days: int) -> dict:
-        """Fetch weather data for the given city.
+    def _get_coordinates(self, city: str) -> tuple[float, float] | None:
+        """Get latitude and longitude for a city.
 
         Args:
-            city: The city name to get weather for
-            days: Number of days for forecast (1-14)
+            city: City name
 
         Returns:
-            Dictionary containing weather forecast data
+            Tuple of (latitude, longitude) or None if not found
 
         """
-        params = {"key": self.api_key, "q": city, "days": days}
-
-        logger.debug(f"Fetching weather for {city} for {days} days")
-        response = requests.get(WEATHER_API_URL, params=params, timeout=API_TIMEOUT)
-
-        if response.status_code == 200:
-            data = response.json()
-            forecast = []
-            for day in data["forecast"]["forecastday"]:
-                forecast.append({"date": day["date"], "temp": day["day"]["avgtemp_f"]})
-
-            logger.info(f"Successfully fetched weather for {city}")
-            return {"city": city, "forecast": forecast}
-        else:
-            logger.warning(
-                f"Failed to fetch weather for {city}: {response.status_code}"
+        try:
+            response = requests.get(
+                self.geocoding_url,
+                params={"name": city, "count": 1, "language": "en", "format": "json"},
+                timeout=10,
             )
-            return {
-                "error": f"City '{city}' not found or other issue. "
-                "Please check the city name and try again."
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("results") and len(data["results"]) > 0:
+                result = data["results"][0]
+                return result["latitude"], result["longitude"]
+            return None
+        except Exception as e:
+            logger.error(f"Error getting coordinates for {city}: {e}")
+            return None
+
+    def get_weather(self, city: str, days: int = 7) -> dict:
+        """Get weather forecast for a city using Open-Meteo (free).
+
+        Args:
+            city: City name
+            days: Number of days to forecast (1-16)
+
+        Returns:
+            Dictionary containing weather data
+
+        """
+        logger.info(f"Fetching weather from Open-Meteo for {city} ({days} days)")
+
+        # Get coordinates
+        coords = self._get_coordinates(city)
+        if not coords:
+            return {"error": f"Could not find coordinates for {city}"}
+
+        latitude, longitude = coords
+
+        # Get weather data
+        try:
+            params = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "daily": [
+                    "temperature_2m_max",
+                    "temperature_2m_min",
+                    "precipitation_sum",
+                    "precipitation_probability_max",
+                    "weathercode",
+                ],
+                "current": [
+                    "temperature_2m",
+                    "weathercode",
+                    "relative_humidity_2m",
+                    "windspeed_10m",
+                ],
+                "timezone": "auto",
+                "forecast_days": min(days, 16),
             }
+
+            response = requests.get(self.weather_url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            # Format the response
+            result = {
+                "city": city,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone": data.get("timezone", "UTC"),
+                "current": data.get("current", {}),
+                "daily": data.get("daily", {}),
+            }
+
+            logger.info(f"Successfully fetched weather from Open-Meteo for {city}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching weather data from Open-Meteo: {e}")
+            return {"error": str(e)}

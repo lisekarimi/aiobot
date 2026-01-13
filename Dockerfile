@@ -1,7 +1,12 @@
 FROM python:3.11-slim
 
-# Install uv
-RUN pip install uv
+# Install uv and git
+RUN pip install uv && apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Clone and install weather MCP server
+RUN git clone https://github.com/first-it-consulting/weather-mcp-server.git /opt/weather-mcp-server && \
+    cd /opt/weather-mcp-server && \
+    uv sync
 
 WORKDIR /app
 
