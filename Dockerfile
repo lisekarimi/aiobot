@@ -1,12 +1,13 @@
 FROM python:3.11-slim
 
-# Install uv and git
-RUN pip install uv && apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
-# Clone and install weather MCP server
-RUN git clone https://github.com/first-it-consulting/weather-mcp-server.git /opt/weather-mcp-server && \
-    cd /opt/weather-mcp-server && \
-    uv sync
+# Install system dependencies: uv, Node.js, and npm
+RUN pip install uv && \
+    apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    node --version && npm --version && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

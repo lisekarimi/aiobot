@@ -15,6 +15,7 @@ AIObot is a conversational AI agent that analyzes real-time weather conditions a
 - uv package manager
 - Docker Desktop
 - Make
+- Node.js and npm (for MCP weather fallback)
 
 ### Required API Keys
 Set these in `.env` (see `.env.example`):
@@ -61,12 +62,21 @@ main.py
 
 ### Key Design Patterns
 
-**Dual-Weather Service Strategy** (src/api/weather_mcp.py:14-23):
+**Dual-Weather Service Strategy** (src/api/weather_mcp.py:14-28):
 The app uses a cost-optimized fallback pattern:
-1. Primary: Open-Meteo API (free, no API key)
-2. Fallback: MCP server with WeatherAPI (premium features, requires `WEATHER_API_KEY`)
+1. Primary: Open-Meteo API (free, no API key) - supports current weather, forecasts, and location search
+2. Fallback: MCP server with WeatherAPI (current weather + air quality only, requires `WEATHER_API_KEY`)
 
-This ensures weather data availability while minimizing costs. The MCP server path is hardcoded to `/opt/weather-mcp-server` for Docker deployment.
+This ensures weather data availability while minimizing costs.
+
+**MCP Implementation** (src/api/weather_mcp.py):
+The fallback uses inter-process communication between Python and Node.js:
+- **Python Client**: Uses the `mcp` library (mcp>=1.3.2) to connect to the MCP server
+- **Node.js Server**: Runs `@swonixs/weatherapi-mcp` npm package via `npx -y`
+- **Communication**: stdio (standard input/output) using `StdioServerParameters`
+- **Tool Exposed**: `get_weather` tool with `location` parameter (current weather + air quality only)
+- **Scope**: MCP fallback only applies to current weather; forecasts and location search use Open-Meteo exclusively
+- **Environment**: `WEATHER_API_KEY` is passed as environment variable to the MCP server process
 
 **Agent-Based Chat** (src/assistant_agent.py):
 Uses OpenAI Agents SDK with function tools for structured tool calling:
@@ -97,8 +107,8 @@ Defaults to `gpt-4o-mini` but can be overridden via `MODEL` environment variable
 Only works in these countries: US, CA, GB, AU, AE, NO, NZ. For other locations, the app provides weather-based suggestions without events.
 
 **Weather Services**:
-- Open-Meteo: Global coverage, 16-day forecast max
-- MCP/WeatherAPI: Premium features (air quality, alerts)
+- Open-Meteo: Global coverage, 16-day forecast max, current weather, geocoding (primary source)
+- MCP/WeatherAPI (@swonixs/weatherapi-mcp): Current weather with air quality data only (fallback for current weather)
 
 ## CI/CD
 
@@ -152,13 +162,16 @@ src/
 
 The app runs on port 7860 by default. The Dockerfile sets up the environment with nginx and includes watchfiles for hot reloading in development.
 
-MCP server must be available at `/opt/weather-mcp-server` for fallback weather functionality.
+**MCP Server Setup**: The Docker environment must have Node.js and npm installed to run the `@swonixs/weatherapi-mcp` package via npx. The Python MCP client spawns the Node.js server process dynamically when needed, communicating via stdio.
 
 ## Important Notes
 
 - Python 3.12+ is not supported - use 3.11.x
 - The app uses `uv` for package management, not pip
-- Weather fallback requires the MCP server to be properly configured with `WEATHER_API_KEY`
+- MCP weather fallback requires:
+  - Node.js and npm installed in the environment
+  - `WEATHER_API_KEY` set in environment variables
+  - The `@swonixs/weatherapi-mcp` package will be fetched automatically via `npx -y`
 - Agent streaming responses filter out tool call arguments to show only user-facing text
 - Event searches default to today's date if not specified
 - The UI uses a custom dark theme with hardcoded styling (src/ui/interface.py:48-76)
