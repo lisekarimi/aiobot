@@ -1,3 +1,14 @@
+---
+title: AIObot
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: AI agent that suggests activities based on real-time weather
+---
+
 # 🤖 AIObot
 
 A conversational AI agent that analyzes real-time weather conditions and suggests the best activities and events based on location. Whether it's sunny, rainy, or snowy, AIObot helps you make the most of your day!

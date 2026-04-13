@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIObot — AI-Powered Weather Activity Assistant</title>
+  <meta name="description" content="AIObot is a conversational AI agent that analyzes real-time weather and suggests personalized activities and events based on your location." />
+  <meta property="og:title" content="AIObot — AI Weather Activity Assistant" />
+  <meta property="og:description" content="Chat with an AI that turns real-time weather into your perfect day plan." />
+  <meta property="og:image" content="https://github.com/lisekarimi/aiobot/blob/main/assets/screenshot.png?raw=true" />
+  <meta property="og:url" content="https://lisekarimi.github.io/aiobot/" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🤖%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0c10;
+      --bg2:     #0f1218;
+      --bg3:     #161b26;
+      --border:  rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text:    #e6edf3;
+      --muted:   #7d8590;
+      --accent:  #58a6ff;
+      --accent2: #bc8cff;
+      --accent3: #3fb950;
+      --grad1:   linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      --glow:    0 0 40px rgba(88,166,255,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      height: 60px;
+      background: rgba(10,12,16,0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: var(--grad1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--text); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+    }
+
+    .btn-primary {
+      background: var(--grad1);
+      color: #ffffff !important;
+      box-shadow: 0 4px 20px rgba(88,166,255,0.28);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(88,166,255,0.42);
+      color: #ffffff !important;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88,166,255,0.05);
+    }
+
+    .btn-lg {
+      padding: 0.75rem 1.75rem;
+      font-size: 1rem;
+      border-radius: 10px;
+    }
+
+    /* ── HAMBURGER ── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 36px; height: 36px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 18px; height: 1.5px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: all 0.28s;
+      transform-origin: center;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    .drawer {
+      display: none;
+      position: fixed;
+      top: 60px; left: 0; right: 0;
+      background: rgba(10,12,16,0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem 1.5rem;
+      flex-direction: column;
+      gap: 0.15rem;
+      z-index: 99;
+    }
+    .drawer.open { display: flex; }
+    .drawer-link {
+      display: block;
+      padding: 0.75rem 0.25rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s;
+    }
+    .drawer-link:last-of-type { border-bottom: none; margin-bottom: 0.75rem; }
+    .drawer-link:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 7rem clamp(1.5rem, 5vw, 4rem) 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before, .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      animation: blob 9s ease-in-out infinite;
+    }
+    .hero::before {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(88,166,255,0.11) 0%, transparent 70%);
+      top: -180px; left: -180px;
+    }
+    .hero::after {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(188,140,255,0.09) 0%, transparent 70%);
+      bottom: -80px; right: -120px;
+      animation-delay: -4.5s;
+    }
+    @keyframes blob {
+      0%, 100% { transform: translate(0,0); }
+      50%       { transform: translate(35px, 25px); }
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.22);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 1.75rem;
+      position: relative;
+      z-index: 1;
+    }
+    .badge span { color: var(--muted); }
+
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .grad { background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 2.25rem;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .screenshot-wrap {
+      position: relative;
+      max-width: 860px;
+      width: 100%;
+      z-index: 1;
+    }
+    .screenshot-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 16px;
+      background: var(--grad1);
+      opacity: 0.4;
+      z-index: -1;
+    }
+    .screenshot-wrap img {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border2);
+      box-shadow: 0 28px 70px rgba(0,0,0,0.55), var(--glow);
+      display: block;
+    }
+
+    /* ── SECTION SHARED ── */
+    .section { padding: 5rem clamp(1.5rem, 5vw, 4rem); }
+    .section-inner { max-width: 1060px; margin: 0 auto; }
+
+    .section-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.85rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.6rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--grad1);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.35s;
+    }
+    .card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 16px 44px rgba(0,0,0,0.35); }
+    .card:hover::after { transform: scaleX(1); }
+
+    .card-icon { font-size: 1.5rem; margin-bottom: 0.9rem; }
+    .card-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.84rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── STACK ── */
+    .stack-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .stack-group {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+    }
+    .stack-group-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 0.85rem;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.18s;
+    }
+    .tag:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.06); }
+    .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .d-blue   { background: var(--accent); }
+    .d-purple { background: var(--accent2); }
+    .d-green  { background: var(--accent3); }
+    .d-red    { background: #f78166; }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 7rem clamp(1.5rem, 5vw, 4rem);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 700px; height: 350px;
+      background: radial-gradient(ellipse, rgba(88,166,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-inner { position: relative; z-index: 1; max-width: 540px; margin: 0 auto; }
+    .cta-section h2 {
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.9rem;
+    }
+    .cta-section p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 2rem clamp(1.5rem, 5vw, 4rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-brand { font-size: 0.95rem; font-weight: 800; background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .footer-copy { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+    .footer-copy a { color: var(--accent); text-decoration: none; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: 0.82rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── FADE-UP ── */
+    .fu { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fu.vis { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hide-m { display: none !important; }
+      .hamburger { display: flex; }
+
+      .hero-cta { flex-direction: column; align-items: center; }
+      .btn-lg { width: 100%; max-width: 280px; justify-content: center; }
+
+      .features-grid { grid-template-columns: 1fr; }
+      .stack-grid    { grid-template-columns: 1fr; }
+
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      nav { padding: 0 1rem; }
+      .cta-btns { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">AIObot</a>
+    <div class="nav-right">
+      <a href="#features" class="nav-link hide-m">Features</a>
+      <a href="#stack"    class="nav-link hide-m">Stack</a>
+      <a href="https://github.com/lisekarimi/aiobot" target="_blank" rel="noopener" class="btn btn-outline hide-m">GitHub</a>
+      <a href="https://aiobot.lisekarimi.com" target="_blank" rel="noopener" class="btn btn-primary">Try Demo</a>
+      <button class="hamburger" id="ham" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE DRAWER -->
+  <div class="drawer" id="drawer">
+    <a href="#features" class="drawer-link">Features</a>
+    <a href="#stack"    class="drawer-link">Stack</a>
+    <a href="https://github.com/lisekarimi/aiobot" target="_blank" rel="noopener" class="drawer-link">GitHub</a>
+    <a href="https://aiobot.lisekarimi.com" target="_blank" rel="noopener" class="btn btn-primary" style="justify-content:center;">Try Demo</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge fu">
+      <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#58a6ff"/></svg>
+      OpenAI Agents SDK · MCP · Gradio
+      <span>· v0.2.0</span>
+    </div>
+    <h1 class="fu">Your AI guide to<br/><span class="grad">weather-smart days</span></h1>
+    <p class="hero-sub fu">
+      Chat about any city, any date. AIObot reads real-time weather and surfaces
+      the perfect mix of activities and local events — instantly.
+    </p>
+    <div class="hero-cta fu">
+      <a href="https://aiobot.lisekarimi.com" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Try the Demo
+      </a>
+      <a href="https://github.com/lisekarimi/aiobot" target="_blank" rel="noopener" class="btn btn-outline btn-lg">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View Source
+      </a>
+    </div>
+    <div class="screenshot-wrap fu">
+      <img src="https://github.com/lisekarimi/aiobot/blob/main/assets/screenshot.png?raw=true" alt="AIObot screenshot" loading="lazy" />
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-inner">
+      <span class="section-label fu">Features</span>
+      <h2 class="section-title fu">Everything for a great day</h2>
+      <p class="section-sub fu">From live weather to curated events — all in one conversation.</p>
+      <div class="features-grid">
+        <div class="card fu">
+          <div class="card-icon">🌤</div>
+          <div class="card-title">Real-time Weather</div>
+          <div class="card-desc">Live conditions and 16-day forecasts via Open-Meteo, with automatic MCP fallback to WeatherAPI when needed.</div>
+        </div>
+        <div class="card fu">
+          <div class="card-icon">🎭</div>
+          <div class="card-title">Event Discovery</div>
+          <div class="card-desc">Concerts, sports, and local events via Ticketmaster across the US, UK, Canada, Australia, UAE, Norway &amp; NZ.</div>
+        </div>
+        <div class="card fu">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">AI-Powered Chat</div>
+          <div class="card-desc">Conversational interface built with OpenAI Agents SDK. Understands natural language like "this weekend" or "next Monday".</div>
+        </div>
+        <div class="card fu">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Streaming Responses</div>
+          <div class="card-desc">Instant feedback via streamed output. Tool calls are filtered so only clean, readable prose reaches the user.</div>
+        </div>
+        <div class="card fu">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">Smart Recommendations</div>
+          <div class="card-desc">Up to 10 balanced picks — outdoor, indoor, and events — weighted by the actual weather for your chosen date.</div>
+        </div>
+        <div class="card fu">
+          <div class="card-icon">🔌</div>
+          <div class="card-title">MCP Integration</div>
+          <div class="card-desc">Model Context Protocol bridge spawns a Node.js weather server on demand, communicating via stdio.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STACK -->
+  <section class="section stack-section" id="stack">
+    <div class="section-inner">
+      <span class="section-label fu">Tech Stack</span>
+      <h2 class="section-title fu">Built with modern tools</h2>
+      <p class="section-sub fu">A lean, production-ready stack optimised for cost and reliability.</p>
+      <div class="stack-grid">
+        <div class="stack-group fu">
+          <div class="stack-group-title">Core</div>
+          <div class="tags">
+            <span class="tag"><span class="dot d-blue"></span>Python 3.11</span>
+            <span class="tag"><span class="dot d-blue"></span>OpenAI Agents SDK</span>
+            <span class="tag"><span class="dot d-blue"></span>Gradio</span>
+            <span class="tag"><span class="dot d-blue"></span>GPT-4o-mini</span>
+          </div>
+        </div>
+        <div class="stack-group fu">
+          <div class="stack-group-title">APIs &amp; Data</div>
+          <div class="tags">
+            <span class="tag"><span class="dot d-green"></span>Open-Meteo</span>
+            <span class="tag"><span class="dot d-green"></span>WeatherAPI</span>
+            <span class="tag"><span class="dot d-green"></span>Ticketmaster</span>
+            <span class="tag"><span class="dot d-green"></span>MCP</span>
+          </div>
+        </div>
+        <div class="stack-group fu">
+          <div class="stack-group-title">Infrastructure</div>
+          <div class="tags">
+            <span class="tag"><span class="dot d-purple"></span>Docker</span>
+            <span class="tag"><span class="dot d-purple"></span>AWS App Runner</span>
+            <span class="tag"><span class="dot d-purple"></span>AWS ECR</span>
+            <span class="tag"><span class="dot d-purple"></span>GitHub Actions</span>
+          </div>
+        </div>
+        <div class="stack-group fu">
+          <div class="stack-group-title">Quality</div>
+          <div class="tags">
+            <span class="tag"><span class="dot d-red"></span>Ruff</span>
+            <span class="tag"><span class="dot d-red"></span>pre-commit</span>
+            <span class="tag"><span class="dot d-red"></span>Commitizen</span>
+            <span class="tag"><span class="dot d-red"></span>Gitleaks</span>
+            <span class="tag"><span class="dot d-red"></span>uv</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-inner">
+      <h2 class="fu">Ready to plan your<br/><span class="grad">perfect day?</span></h2>
+      <p class="fu">No signup, no install — just a conversation.</p>
+      <div class="cta-btns fu">
+        <a href="https://aiobot.lisekarimi.com" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Launch Demo
+        </a>
+        <a href="https://github.com/lisekarimi/aiobot" target="_blank" rel="noopener" class="btn btn-outline btn-lg">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-brand">AIObot</div>
+      <div class="footer-copy">Built by <a href="https://lisekarimi.com" target="_blank" rel="noopener">Lise Karimi</a> · 2025</div>
+    </div>
+    <div class="footer-links">
+      <a href="https://aiobot.lisekarimi.com" target="_blank" rel="noopener">Live Demo</a>
+      <a href="https://github.com/lisekarimi/aiobot" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://lisekarimi.com" target="_blank" rel="noopener">Portfolio</a>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll animations
+    const io = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
+      { threshold: 0.1, rootMargin: '0px 0px -36px 0px' }
+    );
+    document.querySelectorAll('.fu').forEach(el => io.observe(el));
+
+    // Hamburger
+    const ham    = document.getElementById('ham');
+    const drawer = document.getElementById('drawer');
+    ham.addEventListener('click', () => {
+      const open = drawer.classList.toggle('open');
+      ham.classList.toggle('open', open);
+      ham.setAttribute('aria-expanded', open);
+    });
+    drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      drawer.classList.remove('open');
+      ham.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }));
+    document.addEventListener('click', e => {
+      if (!drawer.contains(e.target) && !ham.contains(e.target)) {
+        drawer.classList.remove('open');
+        ham.classList.remove('open');
+        ham.setAttribute('aria-expanded', 'false');
+      }
+    });
+  </script>
+</body>
+</html>

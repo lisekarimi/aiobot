@@ -1,0 +1,126 @@
+name: Deploy to Hugging Face
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deployment:
+        description: 'Type "deploy" to confirm deployment'
+        required: true
+        default: ''
+  workflow_call:
+    inputs:
+      confirm_deployment:
+        description: 'Type "deploy" to confirm deployment'
+        type: string
+        required: true
+
+jobs:
+  deploy_to_huggingface:
+    if: inputs.confirm_deployment == 'deploy'
+    runs-on: ubuntu-latest
+    env:
+      GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+      GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract project name and version from pyproject.toml
+        id: config
+        run: |
+          PROJECT_NAME=$(grep '^name = ' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Project name: '$PROJECT_NAME'"
+          echo "Extracted version: $VERSION"
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          VERSION: ${{ steps.config.outputs.VERSION }}
+        run: |
+          DEPLOY_DIR=hf_deploy
+          SPACE_NAME="aiobot-app"
+          REPO_URL=https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}
+
+          echo "Preparing deployment folder at $DEPLOY_DIR..."
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+
+          echo "Repository URL: https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+
+          # Clone existing Space or initialise a new one
+          if git ls-remote "$REPO_URL" &>/dev/null; then
+            echo "Space exists, cloning..."
+            git clone "$REPO_URL" "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+            find . -mindepth 1 -not -path "./.git*" -exec rm -rf {} +
+          else
+            echo "No Space found, initialising a new repo..."
+            cd "$DEPLOY_DIR"
+            git init -b main
+            git remote add origin "$REPO_URL"
+          fi
+
+          # Set Git identity
+          git config user.name  "${GIT_USERNAME}"
+          git config user.email "${GIT_USER_EMAIL}"
+
+          # Install and configure Git LFS
+          git lfs install
+
+          # ── Copy project files ──────────────────────────────────────
+          cp ../Dockerfile      ./
+          cp ../README.md       ./
+          cp ../pyproject.toml  ./
+          cp ../uv.lock         ./
+          cp ../main.py         ./
+
+          # Application source
+          cp -r ../src ./
+
+          # Assets used at runtime (screenshots etc.)
+          mkdir -p ./assets
+          cp ../assets/screenshot.png ./assets/
+          cp ../assets/cicd.png       ./assets/
+          # ─────────────────────────────────────────────────────────────
+
+          # Track binary assets with Git LFS
+          git lfs track "*.png" "*.jpg" "*.jpeg" "*.gif" "*.webp"
+          git add .gitattributes
+
+          # Commit and push
+          git add .
+          git commit -m "Deploy version ${VERSION}" || echo "Nothing to commit – Space is already up to date."
+          git push origin main
+
+          echo "Hugging Face Space updated to version ${VERSION}"
+          echo "Live at: https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+
+  hf_summary:
+    needs: deploy_to_huggingface
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract project info for summary
+        id: config
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Write job summary
+        run: |
+          VERSION="${{ steps.config.outputs.VERSION }}"
+          HF_USERNAME="${{ secrets.HF_USERNAME }}"
+          SPACE_NAME="aiobot-app"
+          echo "## Hugging Face Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Space** | [${HF_USERNAME}/${SPACE_NAME}](https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | Deployed successfully |" >> $GITHUB_STEP_SUMMARY
